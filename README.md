@@ -20,3 +20,12 @@
 - getting started ( https://mongoosejs.com/docs/index.html )
   - created connectionString with your connection string and options for the database
   - database.js is where the database is connected
+
+## setting up some exmaple schemas ( lesson 3 )
+
+- link to creating mongoose schemas
+- how to write schemas and models
+- read more here ( https://mongoosejs.com/docs/guide.html )
+
+- link to mongoose queries
+- how to write queries ( https://mongoosejs.com/docs/queries.html )

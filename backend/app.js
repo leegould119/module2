@@ -12,7 +12,7 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.send('dfsdfxcc xfdgisdfgt'));
 
-app.use('/auth', require('./routes/authentication-routes'));
+app.use('/profile', require('./routes/profile-routes'));
 app.use('/blog', require('./routes/blog-routes'));
 
 app.listen(port, () =>
