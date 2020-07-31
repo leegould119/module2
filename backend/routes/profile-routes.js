@@ -1,15 +1,15 @@
 const router = require('express').Router();
-
+const verify = require('./verifyToken');
 // import userProfileSchema
 const Profile = require('../schemas/userProfileSchema');
 
-router.get('/', (req, res, next) => {
+router.get('/', verify, (req, res, next) => {
   res.send('LOGIN ROUTES');
   //   next();
 });
 
 //  registering the user
-router.post('/register', (req, res, next) => {
+router.post('/register', verify, (req, res, next) => {
   // res.send({ type: 'POST', endpoint: 'REGISTER' });
   //   TODO register a new user
   //   then check if user has been created successfully
@@ -70,7 +70,7 @@ router.post('/register', (req, res, next) => {
 });
 
 // deleting the user
-router.delete('/delete-user/:id', (req, res, next) => {
+router.delete('/delete-user/:id', verify, (req, res, next) => {
   let id = req.params.id;
   // let userIdBody = req.body.userId;
 
@@ -99,7 +99,7 @@ router.delete('/delete-user/:id', (req, res, next) => {
 });
 
 // getting a particular user by the id
-router.get('/get-user-by-id/:id', (req, res, next) => {
+router.get('/get-user-by-id/:id', verify, (req, res, next) => {
   let id = req.params.id;
   Profile.find({ _id: id })
     .then((profile) => {
@@ -147,7 +147,7 @@ router.get('/get-user-by-id/:id', (req, res, next) => {
 });
 
 // find all users
-router.get('/find-all-users', (req, res, next) => {
+router.get('/find-all-users', verify, (req, res, next) => {
   Profile.find()
     .then((profiles) => {
       res.send(profiles);
@@ -160,7 +160,7 @@ router.get('/find-all-users', (req, res, next) => {
 });
 
 // udating the user
-router.post('/update-user/:id', (req, res, next) => {
+router.post('/update-user/:id', verify, (req, res, next) => {
   const filter = req.params.id;
 
   // dreating a json object with new data

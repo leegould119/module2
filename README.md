@@ -29,3 +29,14 @@
 
 - link to mongoose queries
 - how to write queries ( https://mongoosejs.com/docs/queries.html )
+
+## setting up secrituy for the DB and authentication using JWT ( lesson 4 )
+
+- link to dotenv ( https://www.npmjs.com/package/dotenv )
+- link to jwt ( https://jwt.io/introduction/ )
+- take a look at passport.js and oauth
+- https://en.wikipedia.org/wiki/OAuth#:~:text=OAuth%20is%20an%20open%20standard,without%20giving%20them%20the%20passwords
+- http://www.passportjs.org/packages/
+
+- mongoose encryption package.
+- bcrypt read more here ( https://www.npmjs.com/package/bcryptjs )

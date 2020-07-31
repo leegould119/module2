@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 const app = express();
 const port = process.env.port || 3000;
 // your mongo db connection
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.send('dfsdfxcc xfdgisdfgt'));
 
+app.use('/auth', require('./routes/auth-routes'));
 app.use('/profile', require('./routes/profile-routes'));
 app.use('/blog', require('./routes/blog-routes'));
 
