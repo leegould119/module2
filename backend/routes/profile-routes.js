@@ -4,7 +4,7 @@ const verify = require('./verifyToken');
 const Profile = require('../schemas/userProfileSchema');
 
 router.get('/', verify, (req, res, next) => {
-  res.send('LOGIN ROUTES');
+  res.send(req.user);
   //   next();
 });
 
@@ -50,6 +50,7 @@ router.post('/register', verify, (req, res, next) => {
     .save()
     .then((profile) => {
       const messageWrapper = {
+        userId: req.user.userId,
         message: 'you have successfully created your profile',
         status: {
           error: false,
@@ -82,6 +83,7 @@ router.delete('/delete-user/:id', verify, (req, res, next) => {
   Profile.findByIdAndDelete(id)
     .then((resp) => {
       const messageWrapper = {
+        userId: req.user.userId,
         message: 'you have successfully deleted the profile with id' + id,
         status: {
           error: false,
@@ -117,6 +119,7 @@ router.get('/get-user-by-id/:id', verify, (req, res, next) => {
         res.send(messageWrapper);
       } else {
         const messageWrapper = {
+          userId: req.user.userId,
           message: 'found the user with the id ' + id,
           status: {
             error: false,

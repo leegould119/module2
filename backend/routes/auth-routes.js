@@ -76,7 +76,14 @@ router.post('/change-password', async (req, res, next) => {
   // old password
   console.log(req.body);
   const user = await User.findOne({ email: req.body.email });
-  const validPassword = await bcrypt.compare(req.body.password, user.password);
+  if (user) {
+    const validPassword = await bcrypt.compare(
+      req.body.oldPassword,
+      user.password
+    );
+    res.send(validPassword);
+    next();
+  }
   // new password
 });
 
