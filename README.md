@@ -40,3 +40,13 @@
 
 - mongoose encryption package.
 - bcrypt read more here ( https://www.npmjs.com/package/bcryptjs )
+
+## working wit hrequest parameters, headers and custom middlewares
+
+- middelware read more
+- http://expressjs.com/en/resources/middleware.html
+- requests parameters , headers
+- http://expressjs.com/en/4x/api.html#req
+- MDN headers
+- read more about headers here
+- https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
