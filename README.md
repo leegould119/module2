@@ -50,3 +50,13 @@
 - MDN headers
 - read more about headers here
 - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
+
+## working with mongoose (lesson 6)
+
+- make sure you start this project from scatch when you download lesson 6
+- .env (this is a third party middleware)
+- make sure your .env file is in the root of your project
+- https://www.npmjs.com/package/dotenv
+
+- configuring the db mongoose.js
+- https://mongoosejs.com/docs/guide.html
