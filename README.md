@@ -60,3 +60,15 @@
 
 - configuring the db mongoose.js
 - https://mongoosejs.com/docs/guide.html
+
+## working on another example for mongoose (lesson 7)
+
+- use nodemon, express, mongoose, dotenv
+- npm install --save-dev nodemon
+- npm install express
+- npm install mongoose
+- npm install dotenv
+
+- install all the production dependencies
+- this willl install an the pachages in one
+- npm install express mongoose dotenv

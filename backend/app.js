@@ -1,18 +1,16 @@
 const express = require('express');
 require('dotenv').config();
-require('./dbconfig/database');
-const app = express();
 const port = process.env.PORT;
-
-// MIDDLEWARE
-
+const app = express();
+require('./dbconfig/database');
 // FORM data
 app.use(express.urlencoded({ extended: false }));
 // JSON data
 app.use(express.json());
 
 app.get('/', (req, res) => res.send('dfsdfxcc xfdgisdfgt'));
-app.use('/lesson6', require('./routes/testRoute'));
+
+app.use('/lesson7', require('./routes/test-route'));
 
 app.listen(port, () =>
   console.log(`Example app listening at http://localhost:${port}`)
