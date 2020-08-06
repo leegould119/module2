@@ -69,6 +69,8 @@
 - npm install mongoose
 - npm install dotenv
 
+- npm unistall to remove the packages
+
 - install all the production dependencies
 - this willl install an the pachages in one
 - npm install express mongoose dotenv
