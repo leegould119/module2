@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.get('/', (req, res) => res.send('dfsdfxcc xfdgisdfgt'));
 
-app.use('/lesson7', require('./routes/test-route'));
+app.use('/lesson8', require('./routes/test-route'));
 
 app.listen(port, () =>
   console.log(`Example app listening at http://localhost:${port}`)
