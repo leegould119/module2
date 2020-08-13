@@ -42,11 +42,11 @@ router.post('/login', async (req, res, next) => {
   const userName = req.body.userName,
     userPassword = req.body.userPassword;
 
-  Login.find({ userName: userName })
+  await Login.find({ userName: userName })
     .then((userData) => {
       //   res.send(userData);
       //   const compare = crypt.compare(password, cypher);
-      const validPassword = crypt.compare(
+      const validPassword = await crypt.compare(
         req.body.userPassword,
         userData.userPassword
       );
