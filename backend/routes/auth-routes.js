@@ -29,8 +29,7 @@ router.post('/register', (req, res, next) => {
       res.send({ err });
     });
 
-  //   const bytes = crypt.AES.decrypt(cypher, process.env.SECRET_HASH);
-  //   const unencryptedPassword = bytes.toString(crypt.enc.Utf8);
+  //
 
   //   res.json({
   //     password: userPassword,
@@ -38,22 +37,30 @@ router.post('/register', (req, res, next) => {
   //     unencryptedPassword: unencryptedPassword
   //   });
 });
-router.post('/login', async (req, res, next) => {
+router.post('/login', (req, res, next) => {
   const userName = req.body.userName,
     userPassword = req.body.userPassword;
 
-  await Login.find({ userName: userName })
-    .then((userData) => {
-      //   res.send(userData);
-      //   const compare = crypt.compare(password, cypher);
-      const validPassword = await crypt.compare(
-        req.body.userPassword,
-        userData.userPassword
+  //  check for the user by userName
+  Login.find({ userName: userName })
+    .then((resp) => {
+      //  decrypt the password
+      const bytes = crypt.AES.decrypt(
+        resp[0].userPassword,
+        process.env.SECRET_HASH
       );
-      res.send(validPassword);
+      // create a new string
+      const decryptedPassword = bytes.toString(crypt.enc.Utf8);
+
+      // compare the passwords
+      if (userPassword === decryptedPassword) {
+        res.send('passwords are the same');
+      } else {
+        res.send(' passwords are not the same');
+      }
     })
     .catch((err) => {
-      res.send(err);
+      console.log(err);
     });
 });
 router.post('/logout', (req, resp, next) => {});
