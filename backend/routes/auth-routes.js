@@ -38,21 +38,19 @@ router.post('/register', (req, res, next) => {
   //     unencryptedPassword: unencryptedPassword
   //   });
 });
-router.post('/login', (req, res, next) => {
+router.post('/login', async (req, res, next) => {
   const userName = req.body.userName,
     userPassword = req.body.userPassword;
 
   Login.find({ userName: userName })
     .then((userData) => {
       //   res.send(userData);
-
-      let password = userData.userPassword;
-      const cypher = crypt.AES.encrypt(
-        userPassword,
-        process.env.SECRET_HASH
-      ).toString();
-      const compare = crypt.compare(password, cypher);
-      res.send(compare);
+      //   const compare = crypt.compare(password, cypher);
+      const validPassword = crypt.compare(
+        req.body.userPassword,
+        userData.userPassword
+      );
+      res.send(validPassword);
     })
     .catch((err) => {
       res.send(err);
