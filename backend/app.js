@@ -11,6 +11,7 @@ app.use(express.json());
 app.get('/', (req, res) => res.send('dfsdfxcc xfdgisdfgt'));
 
 app.use('/lesson8', require('./routes/test-route'));
+app.use('/auth', require('./routes/auth-routes'));
 
 app.listen(port, () =>
   console.log(`Example app listening at http://localhost:${port}`)
