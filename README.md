@@ -74,3 +74,10 @@
 - install all the production dependencies
 - this willl install an the pachages in one
 - npm install express mongoose dotenv
+
+## working with bcrypt and JWT
+
+- install bcrypt
+- read more at https://www.npmjs.com/package/bcrypt
+- install JWT
+  -read more at https://www.npmjs.com/package/jsonwebtoken

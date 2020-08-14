@@ -1,67 +1,101 @@
 const router = require('express').Router();
-const crypt = require('crypto-js');
+// const crypt = require('crypto-js');
+const bcrypt = require('bcrypt');
 const Login = require('../schemas/authSchema');
-
-router.post('/register', (req, res, next) => {
-  // require a username and a password
+const jwt = require('jsonwebtoken');
+const { route } = require('./test-route');
+const verifyToken = require('./veriryToken');
+router.post('/register', async (req, res, next) => {
   const userName = req.body.userName,
     userPassword = req.body.userPassword;
 
-  //   let placeholder = 'Password-1234';
+  // res.send({ userName, userPassword });
 
-  const cypher = crypt.AES.encrypt(
-    userPassword,
-    process.env.SECRET_HASH
-  ).toString();
+  const user = await Login.findOne({ userName });
 
-  const newLogin = new Login({
-    userName: userName,
-    userPassword: cypher
-  });
-
-  //   mongo save the user
-  newLogin
-    .save()
-    .then((resp) => {
-      res.send({ resp });
-    })
-    .catch((err) => {
-      res.send({ err });
+  if (!user) {
+    const saltRounds = 10;
+    bcrypt.genSalt(saltRounds, (err, salt) => {
+      bcrypt.hash(userPassword, salt, (err, hash) => {
+        const newLogin = new Login({
+          userName,
+          userPassword: hash
+        });
+        newLogin
+          .save()
+          .then((user) => {
+            res.status(200).json({
+              messageWrapper: {
+                message: 'user created successfully',
+                messageType: 'success'
+              },
+              user
+            });
+          })
+          .catch((err) => {
+            res.status(500).json({
+              messageWrapper: {
+                message: 'something went wrong please try again soon',
+                messageType: 'error'
+              },
+              err
+            });
+          });
+      });
     });
-
-  //
-
-  //   res.json({
-  //     password: userPassword,
-  //     encryptedPassword: cypher,
-  //     unencryptedPassword: unencryptedPassword
-  //   });
-});
-router.post('/login', (req, res, next) => {
-  const userName = req.body.userName,
-    userPassword = req.body.userPassword;
-
-  //  check for the user by userName
-  Login.find({ userName: userName })
-    .then((resp) => {
-      //  decrypt the password
-      const bytes = crypt.AES.decrypt(
-        resp[0].userPassword,
-        process.env.SECRET_HASH
-      );
-      // create a new string
-      const decryptedPassword = bytes.toString(crypt.enc.Utf8);
-
-      // compare the passwords
-      if (userPassword === decryptedPassword) {
-        res.send('passwords are the same');
-      } else {
-        res.send(' passwords are not the same');
+  } else {
+    res.status(400).json({
+      messageWrapper: {
+        message: ' user already exists with this email adress',
+        messageTypepe: 'error'
       }
-    })
-    .catch((err) => {
-      console.log(err);
     });
+  }
+});
+
+router.post('/login', async (req, res, next) => {
+  const userName = req.body.userName,
+    userPassword = req.body.userPassword;
+
+  const user = await Login.findOne({ userName });
+  // res.send({ user });
+
+  const hash = user.userPassword;
+  const userId = user._id;
+  console.log(userId);
+
+  bcrypt.compare(userPassword, hash, (err, result) => {
+    // res.send(result);
+    if (result == true) {
+      const token = jwt.sign({ userId }, process.env.JWT_PRIVATE_KEY, {
+        expiresIn: '1h'
+      });
+
+      res
+        .status(200)
+        .header('auth-token', token)
+        .json({
+          messageWrapper: {
+            message: ' you have successfully logged in',
+            messageType: 'success'
+          },
+          token
+        });
+    } else {
+      res.status(400).json({
+        messageWrapper: {
+          message: 'please make sure your credentials are correct',
+          messageType: 'error'
+        }
+      });
+    }
+  });
+});
+
+router.post('/test-token', verifyToken, (req, res, next) => {
+  res.json({
+    data: req.user.userId
+  });
 });
 router.post('/logout', (req, resp, next) => {});
 
