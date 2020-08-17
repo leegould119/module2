@@ -5,6 +5,7 @@ const Login = require('../schemas/authSchema');
 const jwt = require('jsonwebtoken');
 const { route } = require('./test-route');
 const verifyToken = require('./veriryToken');
+
 router.post('/register', async (req, res, next) => {
   const userName = req.body.userName,
     userPassword = req.body.userPassword;
@@ -52,6 +53,8 @@ router.post('/register', async (req, res, next) => {
     });
   }
 });
+// array [make a db to store tokens]
+let refreshTokens = [];
 
 router.post('/login', async (req, res, next) => {
   const userName = req.body.userName,
@@ -65,21 +68,25 @@ router.post('/login', async (req, res, next) => {
   console.log(userId);
 
   bcrypt.compare(userPassword, hash, (err, result) => {
-    // res.send(result);
     if (result == true) {
-      const token = jwt.sign({ userId }, process.env.JWT_PRIVATE_KEY, {
-        expiresIn: '1h'
-      });
+      const accessToken = generateAccessToken(userId);
+      const refreshToken = jwt.sign(
+        { userId },
+        process.env.JWT_REFRESH_TOKEN_SECRET
+      );
+      // mock database
+      refreshTokens.push(refreshToken);
 
       res
         .status(200)
-        .header('auth-token', token)
+        .header('auth-token', accessToken)
         .json({
           messageWrapper: {
             message: ' you have successfully logged in',
             messageType: 'success'
           },
-          token
+          accessToken,
+          refreshToken
         });
     } else {
       res.status(400).json({
@@ -92,11 +99,45 @@ router.post('/login', async (req, res, next) => {
   });
 });
 
+router.post('/token', (req, res, next) => {
+  const refreshToken = req.body.token;
+
+  if (refreshToken == null) return res.sendStatus(401);
+  // check db for tokens
+  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
+
+  jwt.verify(
+    refreshToken,
+    process.env.JWT_REFRESH_TOKEN_SECRET,
+    (err, user) => {
+      if (err) return res.sendStatus(403);
+      const accessToken = generateAccessToken(user.userId);
+      res.json({ accessToken: accessToken });
+    }
+  );
+});
+
 router.post('/test-token', verifyToken, (req, res, next) => {
   res.json({
     data: req.user.userId
   });
 });
-router.post('/logout', (req, resp, next) => {});
 
+router.delete('/logout', (req, res, next) => {
+  // check the db for token and delete it.
+  refreshTokens = refreshTokens.filter((token) => token !== req.body.token);
+  console.log(refreshTokens);
+
+  res.status(200).json({
+    messageWrapper: { message: 'logout successfuk' }
+  });
+});
+
+// middleware for createating an access token
+function generateAccessToken(userId) {
+  const authToken = jwt.sign({ userId }, process.env.JWT_AUTH_TOKEN_SECRET, {
+    expiresIn: '1m'
+  });
+  return authToken;
+}
 module.exports = router;
