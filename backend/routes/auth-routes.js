@@ -2,9 +2,31 @@ const router = require('express').Router();
 // const crypt = require('crypto-js');
 const bcrypt = require('bcrypt');
 const Login = require('../schemas/authSchema');
+const RefreshToken = require('../schemas/refreshTokenSchema');
 const jwt = require('jsonwebtoken');
 const { route } = require('./test-route');
 const verifyToken = require('./veriryToken');
+
+const nodemailer = require('nodemailer');
+
+// email
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_SERVER_EMAIL,
+    pass: process.env.EMAIL_SERVER_PASSWORD
+  },
+  debug: true, // show debug output
+  logger: true // log information in console
+});
+
+const mailOptions = {
+  from: 'leegould119@live.com',
+  to: 'leegould119@gmail.com',
+  subject: 'Invoices due',
+  text: 'Dudes, we really need your money.'
+};
 
 router.post('/register', async (req, res, next) => {
   const userName = req.body.userName,
@@ -54,7 +76,7 @@ router.post('/register', async (req, res, next) => {
   }
 });
 // array [make a db to store tokens]
-let refreshTokens = [];
+// let refreshTokens = [];
 
 router.post('/login', async (req, res, next) => {
   const userName = req.body.userName,
@@ -65,7 +87,6 @@ router.post('/login', async (req, res, next) => {
 
   const hash = user.userPassword;
   const userId = user._id;
-  console.log(userId);
 
   bcrypt.compare(userPassword, hash, (err, result) => {
     if (result == true) {
@@ -74,19 +95,26 @@ router.post('/login', async (req, res, next) => {
         { userId },
         process.env.JWT_REFRESH_TOKEN_SECRET
       );
-      // mock database
-      refreshTokens.push(refreshToken);
 
-      res
-        .status(200)
-        .header('auth-token', accessToken)
-        .json({
-          messageWrapper: {
-            message: ' you have successfully logged in',
-            messageType: 'success'
-          },
-          accessToken,
-          refreshToken
+      const newRefreshToken = new RefreshToken({
+        refreshToken: refreshToken
+      });
+
+      newRefreshToken
+        .save()
+        .then((data) => {
+          res.status(200).json({
+            messageWrapper: {
+              message: ' you have successfully logged in',
+              messageType: 'success'
+            },
+            accessToken: accessToken,
+            refreshToken: data.refreshToken,
+            creationDate: data.creationDate
+          });
+        })
+        .catch((err) => {
+          res.json(err);
         });
     } else {
       res.status(400).json({
@@ -99,22 +127,57 @@ router.post('/login', async (req, res, next) => {
   });
 });
 
+router.post('/email', (req, res, next) => {
+  // reset password
+
+  // get the data from the user - uswername email
+  // update the password with a code or temp password
+  // they would need th change it
+  // old password
+  // new pssword and verify pss
+  // save the data
+  // send a response.
+
+  // forgot password
+  // reset password
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      res.send(error);
+      next();
+    } else {
+      res.send('Email sent: ' + info.response);
+      next();
+    }
+  });
+});
+
 router.post('/token', (req, res, next) => {
   const refreshToken = req.body.token;
 
   if (refreshToken == null) return res.sendStatus(401);
   // check db for tokens
-  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
+  // if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
 
-  jwt.verify(
-    refreshToken,
-    process.env.JWT_REFRESH_TOKEN_SECRET,
-    (err, user) => {
-      if (err) return res.sendStatus(403);
-      const accessToken = generateAccessToken(user.userId);
-      res.json({ accessToken: accessToken });
-    }
-  );
+  RefreshToken.find({ refreshToken: refreshToken })
+    .then((data) => {
+      // get the token from the db
+      // res.json(data[0].refreshToken);
+
+      const refreshToken = data[0].refreshToken;
+      jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_TOKEN_SECRET,
+        (err, user) => {
+          if (err) return res.sendStatus(403);
+          const accessToken = generateAccessToken(user.userId);
+          res.json({ accessToken: accessToken });
+        }
+      );
+    })
+    .catch((err) => {
+      res.json(err);
+    });
 });
 
 router.post('/test-token', verifyToken, (req, res, next) => {
@@ -124,14 +187,25 @@ router.post('/test-token', verifyToken, (req, res, next) => {
 });
 
 router.delete('/logout', (req, res, next) => {
-  // check the db for token and delete it.
-  refreshTokens = refreshTokens.filter((token) => token !== req.body.token);
-  console.log(refreshTokens);
-
-  res.status(200).json({
-    messageWrapper: { message: 'logout successfuk' }
-  });
+  const refreshToken = req.body.token;
+  RefreshToken.findOneAndDelete({ refreshToken: refreshToken })
+    .then((resp) => {
+      res.json({
+        messageWrapper: {
+          message: 'you have successfully logged out.',
+          messageType: 'success'
+        },
+        resp
+      });
+    })
+    .catch((err) => {
+      res.json(err);
+    });
 });
+
+// reset password
+// get new password code by usename
+// reset password by new token
 
 // middleware for createating an access token
 function generateAccessToken(userId) {
