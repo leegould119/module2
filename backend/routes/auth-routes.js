@@ -31,11 +31,7 @@ const mailOptions = {
 router.post('/register', async (req, res, next) => {
   const userName = req.body.userName,
     userPassword = req.body.userPassword;
-
-  // res.send({ userName, userPassword });
-
   const user = await Login.findOne({ userName });
-
   if (!user) {
     const saltRounds = 10;
     bcrypt.genSalt(saltRounds, (err, salt) => {
@@ -75,8 +71,6 @@ router.post('/register', async (req, res, next) => {
     });
   }
 });
-// array [make a db to store tokens]
-// let refreshTokens = [];
 
 router.post('/login', async (req, res, next) => {
   const userName = req.body.userName,
@@ -154,16 +148,9 @@ router.post('/email', (req, res, next) => {
 
 router.post('/token', (req, res, next) => {
   const refreshToken = req.body.token;
-
   if (refreshToken == null) return res.sendStatus(401);
-  // check db for tokens
-  // if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
-
   RefreshToken.find({ refreshToken: refreshToken })
     .then((data) => {
-      // get the token from the db
-      // res.json(data[0].refreshToken);
-
       const refreshToken = data[0].refreshToken;
       jwt.verify(
         refreshToken,
@@ -188,8 +175,14 @@ router.post('/test-token', verifyToken, (req, res, next) => {
 
 router.delete('/logout', (req, res, next) => {
   const refreshToken = req.body.token;
+
   RefreshToken.findOneAndDelete({ refreshToken: refreshToken })
     .then((resp) => {
+      // invalidate the refresh token in one second
+      jwt.sign({ name: 'expires' }, process.env.JWT_REFRESH_TOKEN_SECRET, {
+        expiresIn: '1000'
+      });
+      // send a response that the refresh token has been deleted from the db
       res.json({
         messageWrapper: {
           message: 'you have successfully logged out.',
@@ -203,15 +196,11 @@ router.delete('/logout', (req, res, next) => {
     });
 });
 
-// reset password
-// get new password code by usename
-// reset password by new token
-
-// middleware for createating an access token
 function generateAccessToken(userId) {
   const authToken = jwt.sign({ userId }, process.env.JWT_AUTH_TOKEN_SECRET, {
     expiresIn: '1m'
   });
   return authToken;
 }
+
 module.exports = router;
