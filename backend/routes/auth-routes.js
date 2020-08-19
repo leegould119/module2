@@ -9,7 +9,6 @@ const verifyToken = require('./veriryToken');
 const nodemailer = require('nodemailer');
 
 // transporter (email server)
-
 const transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',
   port: 587,
@@ -99,15 +98,40 @@ router.post('/forgot-password', async (req, res, next) => {
 router.post('/reset-password', async (req, res, next) => {
   const passwordResetToken = req.body.resetToken,
     newPassword = req.body.newPassword;
-
-  // res.json({ passwordResetToken, newPassword });
   try {
-    const user = await Login.findOne({
-      passwordResetToken: passwordResetToken
-    });
+    const user = await Login.findOne({ passwordResetToken });
 
-    console.log(user);
-    res.json({ user });
+    const saltRounds = 10;
+    bcrypt.genSalt(saltRounds, (err, salt) => {
+      bcrypt.hash(newPassword, salt, (err, hash) => {
+        const userName = user.userName;
+
+        const update = {
+          userName: user.userName,
+          userPassword: hash,
+          passwordResetToken: ''
+        };
+        const option = {
+          new: true
+        };
+
+        // res.json({ update });
+        Login.findOneAndUpdate(userName, update, option)
+          .then((data) => {
+            res.status(200).json({
+              messageWrapper: {
+                message:
+                  'your password has successfully been changes. please login',
+                messageType: 'success'
+              },
+              data
+            });
+          })
+          .catch((err) => {
+            res.send(err);
+          });
+      });
+    });
   } catch (err) {
     res.send(err);
   }
@@ -123,7 +147,8 @@ router.post('/register', async (req, res, next) => {
       bcrypt.hash(userPassword, salt, (err, hash) => {
         const newLogin = new Login({
           userName,
-          userPassword: hash
+          userPassword: hash,
+          passwordResetToken: ''
         });
         newLogin
           .save()
