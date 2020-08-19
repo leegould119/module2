@@ -6,27 +6,112 @@ const RefreshToken = require('../schemas/refreshTokenSchema');
 const jwt = require('jsonwebtoken');
 const { route } = require('./test-route');
 const verifyToken = require('./veriryToken');
-
 const nodemailer = require('nodemailer');
 
-// email
+// transporter (email server)
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.ethereal.email',
+  port: 587,
   auth: {
-    user: process.env.EMAIL_SERVER_EMAIL,
-    pass: process.env.EMAIL_SERVER_PASSWORD
-  },
-  debug: true, // show debug output
-  logger: true // log information in console
+    user: 'xzavier.kris@ethereal.email',
+    pass: 'xn3YTwVZp1zfTT6n8S'
+  }
 });
 
-const mailOptions = {
-  from: 'leegould119@live.com',
-  to: 'leegould119@gmail.com',
-  subject: 'Invoices due',
-  text: 'Dudes, we really need your money.'
+let message = {
+  from: 'xzavier.kris@ethereal.email',
+  to: 'xzavier.kris@ethereal.email',
+  subject: 'Welcome to the app',
+  text: 'welcome ti the site blah',
+  html: '<p>Welcome to the site</p>'
 };
+
+router.post('/send-email', (req, res, next) => {
+  transporter.sendMail(message, (err, info) => {
+    if (err) return res.json({ error: err.message });
+
+    res.json({ respnse: info.messageId });
+    next();
+  });
+});
+
+router.post('/forgot-password', async (req, res, next) => {
+  const userName = req.body.userName;
+  try {
+    const user = await Login.findOne({ userName });
+    if (!user) {
+      return res.status(400).json({
+        messageWrapper: {
+          message: 'no user found, please make sure your username is correct',
+          messageType: 'error'
+        }
+      });
+    } else {
+      const passwordResetToken = Math.random().toString(36).slice(-8);
+
+      const update = {
+        userName: user.userName,
+        userPassword: user.userPassword,
+        passwordResetToken: passwordResetToken
+      };
+
+      const option = {
+        new: true
+      };
+
+      Login.findOneAndUpdate(userName, update, option)
+        .then((data) => {
+          const toEmail = user.userName;
+
+          let message = {
+            from: 'xzavier.kris@ethereal.email',
+            to: toEmail,
+            subject: 'Reset your password',
+            text: ` use this token to reset your password ${passwordResetToken}`,
+            html: ` <p>use this token to reset your password <strong>${passwordResetToken}</strong></p>`
+          };
+
+          transporter.sendMail(message, (err, info) => {
+            // add a message wrapper here for the client
+            if (err) return res.json({ error: err.message });
+
+            res.json({
+              messageWrapper: {
+                message: ' please check your inbox for a reset password token',
+                messageType: 'success'
+              },
+              data
+            });
+            next();
+          });
+        })
+        .catch((err) => {
+          res.send(err);
+          next();
+        });
+    }
+  } catch (err) {
+    res.send(err);
+  }
+});
+
+router.post('/reset-password', async (req, res, next) => {
+  const passwordResetToken = req.body.resetToken,
+    newPassword = req.body.newPassword;
+
+  // res.json({ passwordResetToken, newPassword });
+  try {
+    const user = await Login.findOne({
+      passwordResetToken: passwordResetToken
+    });
+
+    console.log(user);
+    res.json({ user });
+  } catch (err) {
+    res.send(err);
+  }
+});
 
 router.post('/register', async (req, res, next) => {
   const userName = req.body.userName,
@@ -121,31 +206,7 @@ router.post('/login', async (req, res, next) => {
   });
 });
 
-router.post('/email', (req, res, next) => {
-  // reset password
-
-  // get the data from the user - uswername email
-  // update the password with a code or temp password
-  // they would need th change it
-  // old password
-  // new pssword and verify pss
-  // save the data
-  // send a response.
-
-  // forgot password
-  // reset password
-
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      res.send(error);
-      next();
-    } else {
-      res.send('Email sent: ' + info.response);
-      next();
-    }
-  });
-});
-
+// check token endpoint
 router.post('/token', (req, res, next) => {
   const refreshToken = req.body.token;
   if (refreshToken == null) return res.sendStatus(401);
@@ -167,12 +228,14 @@ router.post('/token', (req, res, next) => {
     });
 });
 
+// test token to get back user id
 router.post('/test-token', verifyToken, (req, res, next) => {
   res.json({
     data: req.user.userId
   });
 });
 
+// delete token logout
 router.delete('/logout', (req, res, next) => {
   const refreshToken = req.body.token;
 
@@ -196,6 +259,7 @@ router.delete('/logout', (req, res, next) => {
     });
 });
 
+// generate access token middleware
 function generateAccessToken(userId) {
   const authToken = jwt.sign({ userId }, process.env.JWT_AUTH_TOKEN_SECRET, {
     expiresIn: '1m'
