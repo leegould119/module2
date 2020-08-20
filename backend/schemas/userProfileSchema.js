@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const login = require('../schemas/authSchema');
 
 const SocialLinksSchema = new Schema(
   {
@@ -14,6 +15,10 @@ const SocialLinksSchema = new Schema(
 );
 
 const userProfileSchema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'logins'
+  },
   firstName: {
     type: String
   },

@@ -1,10 +1,8 @@
 const router = require('express').Router();
-// const crypt = require('crypto-js');
 const bcrypt = require('bcrypt');
 const Login = require('../schemas/authSchema');
 const RefreshToken = require('../schemas/refreshTokenSchema');
 const jwt = require('jsonwebtoken');
-const { route } = require('./test-route');
 const verifyToken = require('./veriryToken');
 const nodemailer = require('nodemailer');
 
@@ -65,7 +63,7 @@ router.post('/forgot-password', async (req, res, next) => {
 
           let message = {
             from: 'xzavier.kris@ethereal.email',
-            to: toEmail,
+            to: toEmail.trim(),
             subject: 'Reset your password',
             text: ` use this token to reset your password ${passwordResetToken}`,
             html: ` <p>use this token to reset your password <strong>${passwordResetToken}</strong></p>`
@@ -77,7 +75,9 @@ router.post('/forgot-password', async (req, res, next) => {
 
             res.json({
               messageWrapper: {
-                message: ' please check your inbox for a reset password token',
+                message:
+                  ' please check your inbox for a reset password token at the email: ' +
+                  toEmail,
                 messageType: 'success'
               },
               data
@@ -100,7 +100,13 @@ router.post('/reset-password', async (req, res, next) => {
     newPassword = req.body.newPassword;
   try {
     const user = await Login.findOne({ passwordResetToken });
-
+    if (!user)
+      return res.json({
+        messageWrapper: {
+          message: 'reset token expired, or has been used',
+          messageType: 'error'
+        }
+      });
     const saltRounds = 10;
     bcrypt.genSalt(saltRounds, (err, salt) => {
       bcrypt.hash(newPassword, salt, (err, hash) => {
@@ -287,7 +293,7 @@ router.delete('/logout', (req, res, next) => {
 // generate access token middleware
 function generateAccessToken(userId) {
   const authToken = jwt.sign({ userId }, process.env.JWT_AUTH_TOKEN_SECRET, {
-    expiresIn: '1m'
+    expiresIn: '30m'
   });
   return authToken;
 }
